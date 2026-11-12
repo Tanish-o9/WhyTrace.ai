@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use whyTrace.ai in your research or system evaluations, please cite it as below."
+authors:
+  - family-names: "Kumar"
+    given-names: "Tanish"
+title: "whyTrace.ai: Interpretability-First Evaluation Harness for Agentic Systems"
+version: 0.1.0
+date-released: 2026-11-13
+url: "https://github.com/Tanish-o9/WhyTrace.ai"
+keywords:
+  - "ai-agents"
+  - "interpretability"
+  - "causal-inference"
+  - "evaluation-harness"
+  - "prompt-injection"
+  - "root-cause-analysis"
+
