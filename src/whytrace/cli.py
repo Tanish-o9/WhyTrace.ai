@@ -11,11 +11,15 @@ from . import whowhen
 from .agent import ReActAgent
 from .attacks import LLMAttacker, TemplateAttacker, evaluate_attacks
 from .attribution import all_at_once, step_by_step
+from .ci_bot import generate_pr_comment, write_to_step_summary_if_in_ci
 from .ehr import build_ehr
 from .judge import Jury
 from .llm import make_llm
+from .profiler import profile_run
 from .regression import DEFAULT_PATH, export_case, run_regressions
 from .replay import find_root_cause
+from .report import generate_html_report
+from .server import start_server
 from .sim import scripted_policy
 from .trace import save_traces
 
@@ -103,6 +107,42 @@ def cmd_regress(a):
     sys.exit(1 if failed else 0)
 
 
+def cmd_report(a):
+    out_file = Path(a.out or f"{a.run}/report.html")
+    generate_html_report(a.run, out_file)
+    print(f"Interactive HTML diagnostic report written to {out_file}")
+
+
+def cmd_profile(a):
+    rep = profile_run(a.run, model_tier=a.tier)
+    summary = rep.summary()
+    print("=== whyTrace.ai Efficiency & Token Profile ===")
+    print(f"Total Traces:            {summary['total_traces']}")
+    print(f"Estimated Tokens:        {summary['total_estimated_tokens']:,}")
+    print(f"Estimated Cost:          ${summary['total_estimated_cost_usd']:.4f}")
+    print(f"Redundant Tool Calls:    {summary['total_redundant_calls']}")
+    print(f"Loops / Oscillations:    {summary['loop_detected_count']}")
+
+
+def cmd_comment(a):
+    md = generate_pr_comment(a.run, a.regressions)
+    if a.out:
+        Path(a.out).write_text(md, encoding="utf-8")
+        print(f"PR comment written to {a.out}")
+    else:
+        print(md)
+    write_to_step_summary_if_in_ci(md)
+
+
+def cmd_serve(a):
+    server = start_server(a.host, a.port, Path(a.store))
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down whyTrace server.")
+        server.server_close()
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(
         "whytrace",
@@ -145,6 +185,28 @@ def main(argv=None):
     r.add_argument("--bug", nargs="*", default=[])
     r.add_argument("--path", default=str(DEFAULT_PATH))
     r.set_defaults(fn=cmd_regress)
+
+    rep = sub.add_parser("report", help="generate interactive self-contained HTML diagnostic report")
+    rep.add_argument("--run", default="runs/demo", help="path to run directory containing traces.jsonl")
+    rep.add_argument("--out", help="destination html file (default: <run>/report.html)")
+    rep.set_defaults(fn=cmd_report)
+
+    prof = sub.add_parser("profile", help="analyze token consumption and tool call efficiency")
+    prof.add_argument("--run", default="runs/demo", help="path to run directory or traces.jsonl")
+    prof.add_argument("--tier", default="default", choices=["default", "claude-sonnet", "gpt-4o", "gpt-4o-mini"])
+    prof.set_defaults(fn=cmd_profile)
+
+    cmt = sub.add_parser("comment", help="generate GitHub PR comment / CI step summary markdown")
+    cmt.add_argument("--run", default="runs/demo", help="path to run directory")
+    cmt.add_argument("--regressions", help="path to regressions.jsonl")
+    cmt.add_argument("--out", help="output markdown file (default: stdout)")
+    cmt.set_defaults(fn=cmd_comment)
+
+    srv = sub.add_parser("serve", help="start live trace collector REST server")
+    srv.add_argument("--host", default="127.0.0.1")
+    srv.add_argument("--port", type=int, default=8080)
+    srv.add_argument("--store", default="runs/live/traces.jsonl")
+    srv.set_defaults(fn=cmd_serve)
 
     a = p.parse_args(argv)
     a.fn(a)
