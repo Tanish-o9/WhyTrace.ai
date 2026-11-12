@@ -82,3 +82,4 @@ def write_to_step_summary_if_in_ci(markdown: str) -> None:
     if summary_path and Path(summary_path).exists():
         with open(summary_path, "a", encoding="utf-8") as f:
             f.write("\n\n" + markdown + "\n")
+

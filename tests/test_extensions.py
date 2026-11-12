@@ -93,3 +93,4 @@ def test_coding_benchmark():
     traces = evaluate_coding_agent(dummy_coder)
     assert len(traces) == 2
     assert any(t.success is True for t in traces)
+

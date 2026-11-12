@@ -67,3 +67,4 @@ def start_server(host: str = "127.0.0.1", port: int = 8080, store_path: Path = D
     server = HTTPServer((host, port), WhyTraceRequestHandler)
     print(f"whyTrace.ai collector listening on http://{host}:{port}")
     return server
+

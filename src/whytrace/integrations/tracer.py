@@ -76,3 +76,4 @@ def trace_agent(
 
         return wrapper
     return decorator
+

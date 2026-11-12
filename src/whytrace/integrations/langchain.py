@@ -63,3 +63,4 @@ class WhyTraceCallbackHandler(BaseCallbackHandler):
 
     def get_trace(self) -> Trace:
         return self.trace
+

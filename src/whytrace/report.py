@@ -391,3 +391,4 @@ def generate_html_report(run_dir: str | Path, output_path: str | Path | None = N
         out.write_text(html_content, encoding="utf-8")
 
     return html_content
+

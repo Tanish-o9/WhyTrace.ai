@@ -145,3 +145,4 @@ def profile_run(run_dir_or_traces: str | Path | list[Trace], model_tier: str = "
         loop_detected_count=total_loops,
         per_trace=profiles,
     )
+
